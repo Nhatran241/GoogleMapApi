@@ -120,6 +120,18 @@ public class DirectionFinder {
                 JSONObject jsonStartLocationSteps  = jsonStep.getJSONObject("start_location");
                 JSONObject jsonPolylineSteps = jsonStep.getJSONObject("polyline");
 
+                routeStep.angle = 0;
+                try {
+                    String maneuver = jsonStep.getString("maneuver");
+                    if (maneuver.equals("turn-left")) {
+                        routeStep.angle = -1;
+                    } else if (maneuver.equals("turn-right")) {
+                        routeStep.angle = 1;
+                    }
+                }catch (Exception e){
+                    // ko có maneuver có nghĩa là tiếp tục đi thẳng
+                }
+
                 routeStep.distance = new Distance(jsonDistanceSteps.getString("text"), jsonDistanceSteps.getInt("value"));
                 routeStep.duration = new Duration(jsonDurationSteps.getString("text"), jsonDistanceSteps.getInt("value"));
                 routeStep.startLocation = new LatLng(jsonStartLocationSteps.getDouble("lat"), jsonStartLocationSteps.getDouble("lng"));

@@ -118,16 +118,16 @@ public class ServerManager {
          * 2020-06-26 19:54:39.853 6130-6130/com.itshareplus.googlemapdemo D/nhatnhat: putData: lat/lng: (10.79261,106.6996)
          */
         for (int i = 0; i <routes.size() ; i++) {
-            String data = routes.get(i).startLocation.latitude+"@"+routes.get(i).startLocation.longitude;
             // Từ A-B sẽ có nhiều steps và các steps sẽ có nhiều points
+            String data = "";
             for (Route routeStep:routes.get(i).steps) {
-                Log.d("nhatnhat", "putData: "+routeStep.distance.text);
-                for (LatLng pointStep:routeStep.points) {
-                    Log.d("nhatnhat", "putData: "+pointStep.toString());
-                    data+="_"+pointStep.latitude+"@"+pointStep.longitude;
-                }
+                data += "{\"lat\":"+routeStep.startLocation.latitude+","+"\"lon\":"+routeStep.startLocation.longitude+","+"\"angle\":"+
+                        routeStep.angle+","+"\"dis\":"+routeStep.distance.value+"}#";
+//                for (LatLng pointStep:routeStep.points) {
+//                    data+="_"+pointStep.latitude+"@"+pointStep.longitude;
+//                }
             }
-            data+="_"+routes.get(i).endLocation.latitude+"@"+routes.get(i).endLocation.longitude;
+//            data+="_"+routes.get(i).endLocation.latitude+"@"+routes.get(i).endLocation.longitude;
             Map<String,String> map = new HashMap<>();
             map.put("Data",data);
             db.collection("Path").document("route"+i).set(map).addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -165,6 +165,8 @@ public class ServerManager {
             }
         });
     }
+
+
     public interface IServerManagerPutData{
         void OnPutDataSuccess();
         void OnPutDataFail(String error);

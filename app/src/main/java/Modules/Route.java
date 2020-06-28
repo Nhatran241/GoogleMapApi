@@ -17,4 +17,5 @@ public class Route {
 
     public List<LatLng> points;
     public List<Route> steps;
+    public int angle;
 }
