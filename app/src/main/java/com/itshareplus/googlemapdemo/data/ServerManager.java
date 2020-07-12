@@ -9,7 +9,10 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
@@ -18,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import Modules.Route;
 
@@ -150,17 +155,37 @@ public class ServerManager {
         final List<String> listData = new ArrayList<>();
         if(db==null)
             db = FirebaseFirestore.getInstance();
-        db.collection("Path").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+        /**
+         * Read data bình thường
+         */
+//        db.collection("Path").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+//            @Override
+//            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+//                if (task.isSuccessful()) {
+//                    for (QueryDocumentSnapshot document : task.getResult()) {
+//                        listData.add(document.get("Data").toString());
+//                        Log.d(TAG, "onComplete: "+document.get("Data").toString());
+//                    }
+//                    iServerManagerGetData.OnGetDataSuccess(listData);
+//                } else {
+//                    iServerManagerGetData.OnGetDataFail( task.getException().toString());
+//                }
+//            }
+//        });
+        /**
+         * Read data realtime
+         */
+        db.collection("Path").addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        listData.add(document.get("Data").toString());
-                        Log.d(TAG, "onComplete: "+document.get("Data").toString());
-                    }
+            public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
+                for (DocumentSnapshot document:queryDocumentSnapshots.getDocuments()) {
+                    listData.add(document.get("Data").toString());
+                    Log.d(TAG, "onEvent: "+document.get("Data").toString());
+                }
+                if(listData.size()>0){
                     iServerManagerGetData.OnGetDataSuccess(listData);
-                } else {
-                    iServerManagerGetData.OnGetDataFail( task.getException().toString());
+                }else {
+                    iServerManagerGetData.OnGetDataFail(e.toString());
                 }
             }
         });

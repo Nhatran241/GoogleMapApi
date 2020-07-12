@@ -19,6 +19,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -68,6 +69,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 sendRequest();
             }
         });
+        ServerManager.getInstance().getData(new ServerManager.IServerManagerGetData() {
+            @Override
+            public void OnGetDataSuccess(List<String> data) {
+            }
+
+            @Override
+            public void OnGetDataFail(String error) {
+
+            }
+        });
         btnSendData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -75,16 +86,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     ServerManager.getInstance().putData(routes, new ServerManager.IServerManagerPutData() {
                         @Override
                         public void OnPutDataSuccess() {
-                            ServerManager.getInstance().getData(new ServerManager.IServerManagerGetData() {
-                                @Override
-                                public void OnGetDataSuccess(List<String> data) {
-                                }
 
-                                @Override
-                                public void OnGetDataFail(String error) {
-
-                                }
-                            });
                         }
 
                         @Override
@@ -121,10 +123,72 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         LatLng hcmus = new LatLng(10.762963, 106.682394);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(hcmus, 18));
-        originMarkers.add(mMap.addMarker(new MarkerOptions()
-                .title("Đại học Khoa học tự nhiên")
-                .position(hcmus)));
+//        originMarkers.add(mMap.addMarker(new MarkerOptions()
+//                .title("Đại học Khoa học tự nhiên")
+//                .position(hcmus)));
+//        originMarkers.clear();
 
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                marker.remove();
+                if(marker.getTitle().equals("origin")){
+                    originMarkers.clear();
+                }else {
+                    destinationMarkers.clear();
+                }
+                return false;
+            }
+        });
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                MarkerOptions markerOptions = new MarkerOptions().position(latLng);
+                if(originMarkers.size()==0){
+                    // Add origin
+                    markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.start_blue));
+                    Marker marker =mMap.addMarker(markerOptions);
+                    marker.setTitle("origin");
+                    originMarkers.add(marker);
+                    etOrigin.setText(latLng.latitude+","+latLng.longitude);
+                }else if(originMarkers.size()==1&&originMarkers.get(0).getTitle().equals("origin")){
+                    if(destinationMarkers.size()==1&&destinationMarkers.get(0).getTitle().equals("destination")){
+                        destinationMarkers.get(0).remove();
+                        destinationMarkers.clear();
+                    }else {
+                        for (Marker maker:destinationMarkers) {
+                            maker.remove();
+                        }
+                        destinationMarkers.clear();
+                        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.end_green));
+                        Marker marker =mMap.addMarker(markerOptions);
+                        marker.setTitle("destination");
+                        destinationMarkers.add(marker);
+                        etDestination.setText(latLng.latitude+","+latLng.longitude);
+                    }
+                    markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.end_green));
+                    Marker marker =mMap.addMarker(markerOptions);
+                    marker.setTitle("destination");
+                    destinationMarkers.add(marker);
+                    etDestination.setText(latLng.latitude+","+latLng.longitude);
+                }else {
+                    for (Marker maker:originMarkers) {
+                        maker.remove();
+                    }
+                    originMarkers.clear();
+                    for (Polyline polyline:polylinePaths) {
+                        polyline.remove();
+                    }
+                    polylinePaths.clear();
+                    markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.start_blue));
+                    Marker marker =mMap.addMarker(markerOptions);
+                    marker.setTitle("origin");
+                    originMarkers.add(marker);
+                    etOrigin.setText(latLng.latitude+","+latLng.longitude);
+                }
+
+            }
+        });
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -196,4 +260,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             polylinePaths.add(mMap.addPolyline(polylineOptions));
         }
     }
+
 }
